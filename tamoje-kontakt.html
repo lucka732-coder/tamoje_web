@@ -257,6 +257,7 @@ footer.dfoot{display:none}
   .khead__links{display:flex;align-items:center;gap:32px;margin-right:32px}
   .khead__links a{font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.92);transition:color .15s}
   .khead__links a:hover{color:var(--rasp)}
+  .e404__lead{max-width:none;white-space:nowrap}
   .e404__head .burger{display:none}
   .e404__head .mnav{display:none}
   .mfoot{display:none}
@@ -265,6 +266,7 @@ footer.dfoot{display:none}
   .dfoot__bottom{padding:22px 48px 0}
 }
 
+.kform__note{margin-top:12px;font-size:.92rem;line-height:1.4;color:#fff;min-height:1.1em}
 </style>
 </head>
 <body>
@@ -291,8 +293,8 @@ footer.dfoot{display:none}
     </header>
     <main class="e404__body">
       <span class="e404__eyebrow">Kontakt</span>
-      <h1 class="e404__title"><span class="big">Ozvi se.</span>Dotazy, pecka catering,<br>dárky nebo spolupráce?</h1>
-      <p class="e404__lead">Napiš přes formulář,<br>nebo přímo na e-mail.</p>
+      <h1 class="e404__title">Dotazy, pecka catering,<br>dárky nebo spolupráce?</h1>
+      <p class="e404__lead">Napiš přes formulář nebo přímo na e&#8209;mail.</p>
       <div class="kinfo-top">
         <a href="mailto:lucie@tamoje.cz">lucie@tamoje.cz</a>
       </div>
@@ -301,6 +303,7 @@ footer.dfoot{display:none}
         <label class="kfield"><span>E-mail</span><input name="email" type="email" placeholder="tvuj@email.cz" required></label>
         <label class="kfield"><span>Zpráva</span><textarea name="message" placeholder="Co máš na srdci? Dotaz, spolupráce, velkoodběr…" required></textarea></label>
         <button type="submit" class="mbtn mbtn--rasp">Odeslat zprávu</button>
+        <p class="kform__note" role="status" aria-live="polite"></p>
         <p class="kform__note" aria-live="polite"></p>
       </form>
       <p class="e404__sign">Bude to Pecka.</p>
@@ -349,11 +352,28 @@ document.querySelectorAll('form.kform').forEach(function(f){
     var m=f.querySelector('[name=email]').value.trim();
     var msg=f.querySelector('[name=message]').value.trim();
     var note=f.querySelector('.kform__note');
+    var btn=f.querySelector('button[type=submit]');
     if(!n||!m||!msg){if(note)note.textContent='Vyplň prosím jméno, e-mail i zprávu.';return;}
-    var subj=encodeURIComponent('Zpráva z webu — '+n);
-    var body=encodeURIComponent(msg+'\n\n— '+n+' ('+m+')');
-    window.location.href='mailto:lucie@tamoje.cz?subject='+subj+'&body='+body;
-    if(note)note.textContent='Díky! Otevřel se ti e-mail k odeslání. Kdyby ne, napiš na lucie@tamoje.cz.';
+    if(note)note.textContent='Odesílám…';
+    if(btn)btn.disabled=true;
+    fetch('https://formsubmit.co/ajax/lucie@tamoje.cz',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({name:n,email:m,message:msg,_subject:'Zpráva z webu — '+n,_template:'table',_captcha:'false'})
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d&&(d.success==='true'||d.success===true)){
+        if(note)note.textContent='Díky! Zpráva odeslána. Ozvu se ti co nejdřív.';
+        f.reset();
+      } else {
+        if(note)note.textContent='Odeslání selhalo. Napiš prosím přímo na lucie@tamoje.cz.';
+      }
+    })
+    .catch(function(){
+      if(note)note.textContent='Odeslání selhalo. Napiš prosím přímo na lucie@tamoje.cz.';
+    })
+    .finally(function(){if(btn)btn.disabled=false;});
   });
 });
 </script>
